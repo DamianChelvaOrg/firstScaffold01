@@ -63,10 +63,10 @@ jobs:
           operation: UPSERT
           identifier: "${{ inputs.service_name }}_service"
           title: "${{ inputs.service_name }} Service"
-          blueprint: "orgRepository"
+          blueprint: "service"
           relations: |
             {
-              "repository": "${{ env.ORG_NAME }}/${{ inputs.service_name }}"
+              "selfRepository": "${{ env.ORG_NAME }}-${{ inputs.service_name }}"
             }
 
       - name: Create a log message
