@@ -1,5 +1,4 @@
 name: Scaffold a new service
-
 on:
   workflow_dispatch:
     inputs:
@@ -15,16 +14,14 @@ on:
         required: true
         description: Includes the action's run id
         type: string
-
 jobs:
   scaffold-service:
     runs-on: ubuntu-latest
     env:
       ORG_NAME: DamianChelvaOrg
-
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Extract runId from port_context
         run: |
           echo "PORT_RUN_ID=$(echo '${{ inputs.port_context }}' | jq -r .runId)" >> $GITHUB_ENV
@@ -49,11 +46,31 @@ jobs:
           repositoryName: ${{ inputs.service_name }}
           portUserInputs: '{"cookiecutter_app_name": "${{ inputs.service_name }}" }'
           cookiecutterTemplate: https://github.com/lacion/cookiecutter-golang
-          createPortEntity: true
           blueprintIdentifier: "orgRepository"
           organizationName: ${{ env.ORG_NAME }}
-          
-      
+          createPortEntity: false   # keep false - we upsert manually below with correct identifier
+
+      - name: Upsert Repository Entity in Port
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.port.io
+          operation: UPSERT
+          identifier: "${{ env.ORG_NAME }}-${{ inputs.service_name }}"  # matches gsub("/";"-") in mapping
+          title: "${{ inputs.service_name }}"
+          blueprint: "orgRepository"
+          properties: |
+            {
+              "full_name": "${{ env.ORG_NAME }}/${{ inputs.service_name }}",
+              "url": "https://github.com/${{ env.ORG_NAME }}/${{ inputs.service_name }}",
+              "visibility": "private"
+            }
+          relations: |
+            {
+              "organization": "${{ env.ORG_NAME }}"
+            }
+
       - name: Create Service in Port with Repository Relation
         uses: port-labs/port-github-action@v1
         with:
@@ -66,7 +83,7 @@ jobs:
           blueprint: "service"
           relations: |
             {
-              "selfRepository": "${{ env.ORG_NAME }}/${{ inputs.service_name }}"
+              "selfRepository": "${{ env.ORG_NAME }}-${{ inputs.service_name }}"
             }
 
       - name: Create a log message
