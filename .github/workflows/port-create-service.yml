@@ -49,11 +49,11 @@ jobs:
           repositoryName: ${{ inputs.service_name }}
           portUserInputs: '{"cookiecutter_app_name": "${{ inputs.service_name }}" }'
           cookiecutterTemplate: https://github.com/lacion/cookiecutter-golang
+          createPortEntity: true
           blueprintIdentifier: "orgRepository"
           organizationName: ${{ env.ORG_NAME }}
-          createPortEntity: false
-
-
+          
+      
       - name: Create Service in Port with Repository Relation
         uses: port-labs/port-github-action@v1
         with:
